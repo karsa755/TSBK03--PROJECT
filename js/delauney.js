@@ -94,7 +94,7 @@ function insertPoint(point, faceList, edgeList, vertexList) {
         let isInside = insideTriangle(point, faceList[i]);
         if(isInside) {
             triangleSplit(point, i, faceList, edgeList, vertexList);
-            checkDelaunay(edgeList)
+            checkDelaunay(edgeList);
             return true;
         }
     }
@@ -182,62 +182,90 @@ function checkDelaunay(edgeList) {
             console.log("Flipped Edge");
         }
     }
+   
 }
 
 function isDelaunay(edge) {
     if(edge.twin == null)
+    {
         return true;
+    }
 
     let v0 = edge.vertex.point;
     let v1 = edge.next.vertex.point;
     let v2 = edge.prev.vertex.point;
     let v3 = edge.twin.prev.vertex.point;
-
-    let v1v2 = v1.sub(v2);
-    let v0v2 = v0.sub(v2);
-    let v1v3 = v1.sub(v3);
-    let v0v3 = v0.sub(v3);
+    let v1v2 = new THREE.Vector3(0,0,0);
+    let v0v2 = new THREE.Vector3(0,0,0);
+    let v1v3 = new THREE.Vector3(0,0,0);
+    let v0v3 = new THREE.Vector3(0,0,0);
+    v1v2.subVectors(v1,v2);
+    v0v2.subVectors(v0,v2);
+    v1v3.subVectors(v1,v3);
+    v0v3.subVectors(v0,v3);
+   
 
     let alpha = v1v2.dot(v0v2);
     let beta = v1v3.dot(v0v3);
-
+    alpha = Math.acos(Math.min(Math.max(-1, alpha), 1));
+    beta = Math.acos(Math.min(Math.max(-1, beta), 1));
     if(alpha+beta > Math.PI)
+    {        
         return false;
-    
-    return true;
+    }
+    else
+    {
+        return true;
+    } 
 }
 
 function flipEdge(edge, edgeList) {
-    let newEdge = new HalfEdge(edge.prev.vertex, edge.twin.face);
-    let newTwin = new HalfEdge(edge.twin.prev.vertex, edge.face);
+    let newEdge = new HalfEdge(edge.prev.vertex, edge.face);
+    let newTwin = new HalfEdge(edge.twin.prev.vertex, edge.twin.face);
 
     newEdge.next = edge.twin.prev;
     newEdge.prev = edge.next;
 
     newTwin.next = edge.prev;
     newTwin.prev = edge.twin.next;
-
-    edge.twin.prev.next = edge.next;
-    edge.twin.prev.prev = newEdge;
-    edge.next.prev = newEdge.next;
-    edge.next.next = newEdge;
-
-    edge.prev.next = edge.twin.next;
-    edge.prev.prev = newTwin;
-    edge.twin.next.next = newTwin;
-    edge.twin.next.prev = newTwin.next;
-
     newEdge.setTwin(newTwin);
     newTwin.setTwin(newEdge);
+    let newEdgNext = (newEdge.next);
+    let newEdgPrev = newEdge.prev;
+    let newTwNext = newTwin.next;
+    let newTwPrev = newTwin.prev;
+    newEdgNext.next = newEdge.prev;
+    newEdgNext.prev = newEdge;
+    newEdgPrev.prev = newEdge.next;
+    newEdgPrev.next = newEdge;
+
+    newTwNext.next = newTwin.prev;
+    newTwNext.prev = newTwin;
+    newTwPrev.next = newTwin;
+    newTwPrev.prev = newTwin.next;
     
-    edge.face.edge = newEdge;
-    edge.twin.face.edge = newTwin;
+    newEdgPrev.face = newEdge.face;
+    newTwPrev.face = newTwin.face;
+    newEdgNext.face = newEdge.face;
+    newTwNext.face = newTwin.face;
 
-    newEdge.prev.face = newEdge.face;
-    newTwin.prev.face = newTwin.face;
-
+    for(let i = 0; i < edgeList.length; ++i)
+    {
+        if(edgeList[i].id == edge.id)
+        {
+            edgeList[i] = newEdge;
+            edgeList[i].face.edge = newEdge;
+        }
+        if(edgeList[i].id == edge.twin.id)
+        {
+            edgeList[i] = newTwin;
+            edgeList[i].face.edge = newTwin.twin;
+        }
+    }
     edge = newEdge;
-    edge.twin = newTwin;
+    edge.twin = newTwin;  
+    (edge.face).edge = newEdge;
+    (edge.twin.face).edge = newTwin.twin;
 }
 
 function generateMesh(faceList) {

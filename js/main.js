@@ -28,21 +28,17 @@ function init() {
 	wireframeMaterial.wireframe = true;
 	
 	//generate new point
-	for(let i = 0; i < 5; ++i) {
+	for(let i = 0; i < 2; ++i) {
 		let point = samplePosition();
 		insertPoint(point,FL, HE, VL);
-		
 		let geo = generateMesh(FL);
 		let mesh = new THREE.Mesh(geo, wireframeMaterial);
 		scene.add(mesh);
 	}
-	
-
 	//draw
 	pointGeometry = new THREE.Geometry();
-
-	for(let i = 0; i < HE.length; ++i) {
-		pointGeometry.vertices.push(HE[i].vertex.point);
+	for(let i = 0; i < VL.length; ++i) {
+		pointGeometry.vertices.push(VL[i].point);
 	}
 
 	pointMaterial = new THREE.PointsMaterial( {color: 0xff0000, size: 0.05} );
