@@ -282,9 +282,105 @@ function generateMesh(faceList) {
 
         geo.faces.push(newFace);
 
+    }
+
+    return geo;
+}
+function generateDT(num) {
+
+    let geo = new THREE.Geometry();
+    var vertsForDT = [[-1,-1], [-1,1], [1,-1], [1,1]];
+    //generate new point
+	for(let i = 0; i < num; ++i) {
+		let point = samplePosition();
+		pt = [point.x, point.y];
+		vertsForDT.push(pt);
+    }
+    
+    var facesforDT = Delaunay.triangulate(vertsForDT);
+    for(var i = 0; i < vertsForDT.length; ++i)
+    {
+        let pt = new THREE.Vector3(vertsForDT[i][0], vertsForDT[i][1], 0);
+        geo.vertices.push(pt);
+    }
+
+ 
+
+    for(let i = 0; i < facesforDT.length; i = i+3) {
+
+        let newFace = new THREE.Face3(facesforDT[i], facesforDT[i+1], facesforDT[i+2]);
+        let p1 = new THREE.Vector3(vertsForDT[newFace.a][0], vertsForDT[newFace.a][1], 0);
+        let p2 = new THREE.Vector3(vertsForDT[newFace.b][0], vertsForDT[newFace.b][1], 0);
+        let p3 = new THREE.Vector3(vertsForDT[newFace.c][0], vertsForDT[newFace.c][1], 0);
+        //check orientation..
+        let val = (p2.y - p1.y) * (p3.x - p2.x) - 
+        (p2.x - p1.x) * (p3.y - p2.y); 
+         if(val > 0)
+        {   
+            newFace = new THREE.Face3(facesforDT[i], facesforDT[i+2], facesforDT[i+1]);
+        }
+ 
+        geo.faces.push(newFace);
         geo.computeFaceNormals();
         geo.computeVertexNormals();
     }
 
     return geo;
+}
+
+function generateHalfMesh(vertsHE, facesHE)
+{
+    let VL = [];
+    let HE = [];
+    let FL = [];
+    for(var i = 0; i < vertsHE.length; ++i)
+    {
+        
+        let v = new VertexNode(vertsHE[i]);
+        VL.push(v);
+    }
+    for(let i = 0; i < facesHE.length; i++)
+    {
+        let f = new Face();
+        //create new half edges
+        let e0 = new HalfEdge(VL[facesHE[i].a], f);
+        let e1 = new HalfEdge(VL[facesHE[i].b], f);
+        let e2 = new HalfEdge(VL[facesHE[i].c], f);
+        //set next and prev
+        e0.next = e1;
+        e0.prev = e2;
+        e1.next = e2;
+        e1.prev = e0;
+        e2.next = e0;
+        e2.prev = e1;
+        //set face edge
+        f.edge = e0;
+        //set face for edges
+        e0.face = f;
+        e1.face = f;
+        e2.face = f;
+        //push to lists
+        FL.push(f);
+        HE.push(e0);
+        HE.push(e1);
+        HE.push(e2);
+    }
+    //do the twins
+    for(let i = 0; i < HE.length; ++i)
+    {
+        for(let j = 0; j < HE.length; ++j)
+        {
+            if(( HE[i].vertex.point.x === HE[j].next.vertex.point.x) && (HE[j].vertex.point.x === HE[i].next.vertex.point.x) &&
+            ( HE[i].vertex.point.y === HE[j].next.vertex.point.y) && (HE[j].vertex.point.y === HE[i].next.vertex.point.y) 
+            ) // should be twins
+            {
+                
+                HE[i].setTwin(HE[j]);
+                HE[j].setTwin(HE[i]);
+            }
+        }
+    }
+    
+    let retMat = [VL, HE, FL];
+    return retMat;
 }

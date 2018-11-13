@@ -26,19 +26,21 @@ function init() {
 	//generate points
 	wireframeMaterial = new THREE.MeshStandardMaterial({color: 0xffffff});
 	wireframeMaterial.wireframe = true;
+
+	//generate points
+	wireframeMaterialNew = new THREE.MeshStandardMaterial({color: 0xffffff});
+	wireframeMaterialNew.wireframe = true;
+
+	let geo = generateDT(200);
+	let voronoi = getVoronoiFromDelaunay(geo.vertices, geo.faces); //half edge so far
+	let geoNew = generateMesh(voronoi[2]);
 	
-	//generate new point
-	for(let i = 0; i < 2; ++i) {
-		let point = samplePosition();
-		insertPoint(point,FL, HE, VL);
-		let geo = generateMesh(FL);
-		let mesh = new THREE.Mesh(geo, wireframeMaterial);
-		scene.add(mesh);
-	}
+	let mesh = new THREE.Mesh(geoNew, wireframeMaterial);
+	scene.add(mesh);
 	//draw
 	pointGeometry = new THREE.Geometry();
-	for(let i = 0; i < VL.length; ++i) {
-		pointGeometry.vertices.push(VL[i].point);
+	for(let i = 0; i < geo.vertices.length; ++i) {
+		pointGeometry.vertices.push(geo.vertices[i]);
 	}
 
 	pointMaterial = new THREE.PointsMaterial( {color: 0xff0000, size: 0.05} );
