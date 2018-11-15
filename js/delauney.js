@@ -196,11 +196,14 @@ function checkDelaunay(edgeList, faceList) {
             flipEdge(key, edgeList, faceList);
         }
     }
+   
 }
 
 function isDelaunay(edge) {
     if(edge.twin == null)
+    {
         return true;
+    }
 
     let v0 = edge.vertex.point;
     let v1 = edge.next.vertex.point;
@@ -216,9 +219,13 @@ function isDelaunay(edge) {
     let beta = Math.acos(clamp(-1,1,v1v3.dot(v0v3)));
 
     if(alpha+beta > Math.PI)
+    {        
         return false;
-    
-    return true;
+    }
+    else
+    {
+        return true;
+    } 
 }
 
 
@@ -258,7 +265,6 @@ function flipEdge(i, edgeList, faceList) {
     e4.prev = e3;
     e5.next = e3;
     e5.prev = e4;
-
     
     //twins
     if(hasTwin(edgeList[i].prev)) {
