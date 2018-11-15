@@ -2,7 +2,7 @@ let _width, _height;
 let xmin, xmax, ymin, ymax, zmin, zmax;
 
 //init function; creates square 
-function initDelaunay(dx2, dy2, dz2, he, vl, fl) {
+function initDelaunay(dx2, dy2, dz2, he, vl, fl, bl) {
     
     _width = dx2*2;
     _height = dy2*2;
@@ -62,6 +62,10 @@ function initDelaunay(dx2, dy2, dz2, he, vl, fl) {
     he[e4.id] = e4;
     he[e5.id] = e5;
 
+    bl[0] = new THREE.Vector3(-dx2*2, dy2*2,0);
+    bl[1] = new THREE.Vector3(-dx2*2, -dy2*2,0);
+    bl[2] = new THREE.Vector3(dx2*2, -dy2*2, 0);
+    bl[3] = new THREE.Vector3(dx2*2, dy2*2, 0); 
 }
 
 function samplePosition() {
@@ -402,6 +406,22 @@ function generateMesh(faceList) {
     }
 
     return geo;
+}
+
+function visualizeVoronoi(voroFaces, scene)
+{
+    let lineMaterial = new THREE.LineBasicMaterial({color:0xff0000});
+    for(let key in voroFaces)
+    {
+        let cell = new THREE.Geometry();
+        for(let i = 0; i < voroFaces[key].length; ++i)
+        {
+            cell.vertices.push(voroFaces[key][i]);
+        }
+        
+        let line = new THREE.Line(cell, lineMaterial);
+        scene.add(line);
+    }
 }
 
 

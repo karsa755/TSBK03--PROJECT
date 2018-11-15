@@ -7,8 +7,9 @@ var RPM = 0.2;
 var HE = {};
 var FL = {};
 var VL = {};
-
-initDelaunay(1, 1, 0.05, HE, VL, FL);
+var voronoiDiag = [];
+var outerSquare = [];
+initDelaunay(1, 1, 0.00, HE, VL, FL, outerSquare);
 init();
 animate();
 
@@ -37,28 +38,32 @@ function init() {
 		let point = samplePosition();
 		insertPoint(point,FL, HE, VL);
 	}
-
+	voronoiDiag = generateVoronoiDiagram(FL, HE,VL, outerSquare);
 	let geo = generateMesh(FL);
 	mesh = new THREE.Mesh(geo, wireframeMaterial);
+	visualizeVoronoi(voronoiDiag[1], scene);
 
 	mesh.geometry.colorsNeedUpdate = true;
 	scene.add(mesh);
 
 	console.log(Object.keys(FL).length);
+	console.log(Object.keys(voronoiDiag[0]).length);
 	console.log(Object.keys(HE).length);
+	console.log(voronoiDiag[1]);
 	
 
 	
 	//draw points
 	pointGeometry = new THREE.Geometry();
 
-	for(let key in VL) {
-		pointGeometry.vertices.push(VL[key].point);
+	for(let key in voronoiDiag[0]) {
+		pointGeometry.vertices.push(voronoiDiag[0][key]);
 	}
+	
 
-	pointMaterial = new THREE.PointsMaterial( {color: 0xff0000, size: 0.05} );
+	pointMaterial = new THREE.PointsMaterial( {color: 0xff0000, size: 0.01} );
 	points = new THREE.Points(pointGeometry, pointMaterial);
-	//scene.add(points);
+	scene.add(points);
 	
 
 	controls.update();
@@ -69,8 +74,8 @@ function animate() {
 	controls.update();
 	//stuff
 	let rotY = RPM * (Math.PI*2.0) * clock.getDelta();
-	mesh.rotation.y += rotY;
-	points.rotation.y  += rotY;
+	//mesh.rotation.y += rotY;
+	//points.rotation.y  += rotY;
 
 	renderer.render( scene, camera );
 
