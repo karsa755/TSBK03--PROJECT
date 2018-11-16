@@ -1,7 +1,7 @@
 var camera, scene, renderer, controls;
 var geometry, material, mesh;
-var pointGeometry, pointMaterial, wireframeMaterial, colorMaterial;
-var points;
+var pointGeometry, pointMaterial, wireframeMaterial, colorMaterial, voroPointGeometry, voroPointMaterial
+var points, voroPoints;
 var clock;
 var RPM = 0.2;
 var HE = {};
@@ -16,7 +16,7 @@ animate();
 function init() {
 	clock = new THREE.Clock(true);
 
-	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 50 );
+	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 500 );
 	camera.position.z = 2;
 	controls = new THREE.OrbitControls(camera);
 
@@ -38,32 +38,64 @@ function init() {
 		let point = samplePosition();
 		insertPoint(point,FL, HE, VL);
 	}
-	voronoiDiag = generateVoronoiDiagram(FL, HE,VL, outerSquare);
+	voronoiDiag = generateVoronoiDiagram(FL, HE, VL, outerSquare);
 	let geo = generateMesh(FL);
 	mesh = new THREE.Mesh(geo, wireframeMaterial);
 	visualizeVoronoi(voronoiDiag[1], scene);
 
-	mesh.geometry.colorsNeedUpdate = true;
-	scene.add(mesh);
 
-	console.log(Object.keys(FL).length);
-	console.log(Object.keys(voronoiDiag[0]).length);
-	console.log(Object.keys(HE).length);
-	console.log(voronoiDiag[1]);
+	//debug
+	for(let key in HE) {
+		let b = isDelaunay(HE[key]);
+        if(!b) {
+			DEBUGisDelaunay(HE[key]);
+			let g = new THREE.Geometry();
+
+			g.vertices.push(HE[key].vertex.point);
+			g.vertices.push(HE[key].next.vertex.point);
+			g.vertices.push(HE[key].prev.vertex.point);
+
+			let f = new THREE.Face3(0,1,2);
+			f.color.setRGB(HE[key].face.color.r, HE[key].face.color.g, HE[key].face.color.b);
+			g.faces.push(f);
+
+			g.computeFaceNormals();
+			g.computeVertexNormals();
+			scene.add(new THREE.Mesh(g,colorMaterial));
+        }
+    }
+
+
+	mesh.geometry.colorsNeedUpdate = true;
+	//scene.add(mesh);
+
+	//console.log(Object.keys(FL).length);
+	//console.log(Object.keys(voronoiDiag[0]).length);
+	//console.log(Object.keys(HE).length);
+	//console.log(voronoiDiag[1]);
 	
 
 	
 	//draw points
 	pointGeometry = new THREE.Geometry();
+	voroPointGeometry = new THREE.Geometry();
 
+	for(let key in VL) {
+		pointGeometry.vertices.push(VL[key].point);
+	}
 	for(let key in voronoiDiag[0]) {
-		pointGeometry.vertices.push(voronoiDiag[0][key]);
+		voroPointGeometry.vertices.push(voronoiDiag[0][key]);
 	}
 	
 
-	pointMaterial = new THREE.PointsMaterial( {color: 0xff0000, size: 0.01} );
+	pointMaterial = new THREE.PointsMaterial( {color: 0x000000, size: 0.01} );
 	points = new THREE.Points(pointGeometry, pointMaterial);
-	scene.add(points);
+	voroPointMaterial = new THREE.PointsMaterial( {color: 0xff0000, size: 0.01} );
+	voroPoints = new THREE.Points(voroPointGeometry, voroPointMaterial);
+	//scene.add(points);
+	//scene.add(voroPoints);
+
+	//viz(FL,scene);
 	
 
 	controls.update();

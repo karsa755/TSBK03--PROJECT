@@ -62,10 +62,11 @@ function initDelaunay(dx2, dy2, dz2, he, vl, fl, bl) {
     he[e4.id] = e4;
     he[e5.id] = e5;
 
-    bl[0] = new THREE.Vector3(-dx2*2, dy2*2,0);
-    bl[1] = new THREE.Vector3(-dx2*2, -dy2*2,0);
-    bl[2] = new THREE.Vector3(dx2*2, -dy2*2, 0);
-    bl[3] = new THREE.Vector3(dx2*2, dy2*2, 0); 
+    let multi = 3.0;
+    bl[0] = new THREE.Vector3(-dx2*multi, dy2*multi,0);
+    bl[1] = new THREE.Vector3(-dx2*multi, -dy2*multi,0);
+    bl[2] = new THREE.Vector3(dx2*multi, -dy2*multi, 0);
+    bl[3] = new THREE.Vector3(dx2*multi, dy2*multi, 0); 
 }
 
 function samplePosition() {
@@ -194,13 +195,19 @@ function triangleSplit(point, index, faceList, edgeList, vertexList) {
 }
 
 function checkDelaunay(edgeList, faceList) {
-    for(let key in edgeList) {
-        let b = isDelaunay(edgeList[key]);
-        if(!b) {
-            flipEdge(key, edgeList, faceList);
+    let done = true;
+    let it = 0;
+    while(done) {
+        ++it;
+        done = false;
+        for(let key in edgeList) {
+            let b = isDelaunay(edgeList[key]);
+            if(!b) {
+                flipEdge(key, edgeList, faceList);
+                done = true;
+            }
         }
-    }
-   
+    }   
 }
 
 function isDelaunay(edge) {
@@ -219,11 +226,41 @@ function isDelaunay(edge) {
     let v1v3 =  (new THREE.Vector3(v1.x-v3.x, v1.y-v3.y, v1.z-v3.z)).normalize();
     let v0v3 =  (new THREE.Vector3(v0.x-v3.x, v0.y-v3.y, v0.z-v3.z)).normalize();
 
-    let alpha = Math.acos(clamp(.1,1,v1v2.dot(v0v2)));
+    let alpha = Math.acos(clamp(-1,1,v1v2.dot(v0v2)));
     let beta = Math.acos(clamp(-1,1,v1v3.dot(v0v3)));
 
     if(alpha+beta > Math.PI)
     {        
+        return false;
+    }
+    else
+    {
+        return true;
+    } 
+}
+
+function DEBUGisDelaunay(edge) {
+    if(edge.twin == null)
+    {
+        return true;
+    }
+
+    let v0 = edge.vertex.point;
+    let v1 = edge.next.vertex.point;
+    let v2 = edge.prev.vertex.point;
+    let v3 = edge.twin.prev.vertex.point;
+
+    let v1v2 =  (new THREE.Vector3(v1.x-v2.x, v1.y-v2.y, v1.z-v2.z)).normalize();
+    let v0v2 =  (new THREE.Vector3(v0.x-v2.x, v0.y-v2.y, v0.z-v2.z)).normalize();
+    let v1v3 =  (new THREE.Vector3(v1.x-v3.x, v1.y-v3.y, v1.z-v3.z)).normalize();
+    let v0v3 =  (new THREE.Vector3(v0.x-v3.x, v0.y-v3.y, v0.z-v3.z)).normalize();
+
+    let alpha = Math.acos(clamp(-1,1,v1v2.dot(v0v2)));
+    let beta = Math.acos(clamp(-1,1,v1v3.dot(v0v3)));
+
+    if(alpha+beta > Math.PI)
+    {        
+        console.log({'alpha': (alpha / Math.PI) * 180.0 , 'beta': (beta / Math.PI) * 180.0 });
         return false;
     }
     else
@@ -418,8 +455,25 @@ function visualizeVoronoi(voroFaces, scene)
         {
             cell.vertices.push(voroFaces[key][i]);
         }
+        cell.vertices.push(voroFaces[key][0]);
         
         let line = new THREE.Line(cell, lineMaterial);
+        scene.add(line);
+    }
+}
+
+function viz(faces, scene)
+{
+    let lineMaterial = new THREE.LineBasicMaterial({color:0xcccccc});
+    for(let key in faces)
+    {
+        let g = new THREE.Geometry();
+        g.vertices.push(faces[key].edge.vertex.point);
+        g.vertices.push(faces[key].edge.next.vertex.point);
+        g.vertices.push(faces[key].edge.prev.vertex.point);
+        g.vertices.push(faces[key].edge.vertex.point);
+        
+        let line = new THREE.Line(g, lineMaterial);
         scene.add(line);
     }
 }
