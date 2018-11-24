@@ -19,6 +19,7 @@ function init() {
 	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 500 );
 	camera.position.z = 2;
 	controls = new THREE.OrbitControls(camera);
+	controls.screenSpacePanning = true;
 
 	scene = new THREE.Scene();
 
@@ -42,8 +43,9 @@ function init() {
 	let geo = generateMesh(FL);
 	mesh = new THREE.Mesh(geo, wireframeMaterial);
 
-	meshify(outerSquare, voronoiDiag[1]);
-	visualizeVoronoi(voronoiDiag[1], scene);
+	let newVoroDEBUG = meshify(outerSquare, voronoiDiag[1]);
+	//visualizeVoronoi(voronoiDiag[1], scene,false);
+	visualizeVoronoi(newVoroDEBUG, scene, true);
 
 
 	//debug

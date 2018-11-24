@@ -1,4 +1,32 @@
 
+//from : https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon/17490923#17490923
+function pointIsInPoly(p, polygon) {
+    var isInside = false;
+    var minX = polygon[0].x, maxX = polygon[0].x;
+    var minY = polygon[0].y, maxY = polygon[0].y;
+    for (var n = 1; n < polygon.length; n++) {
+        var q = polygon[n];
+        minX = Math.min(q.x, minX);
+        maxX = Math.max(q.x, maxX);
+        minY = Math.min(q.y, minY);
+        maxY = Math.max(q.y, maxY);
+    }
+
+    if (p.x < minX || p.x > maxX || p.y < minY || p.y > maxY) {
+        return false;
+    }
+
+    var i = 0, j = polygon.length - 1;
+    for (i, j; i < polygon.length; j = i++) {
+        if ( (polygon[i].y > p.y) != (polygon[j].y > p.y) &&
+                p.x < (polygon[j].x - polygon[i].x) * (p.y - polygon[i].y) / (polygon[j].y - polygon[i].y) + polygon[i].x ) {
+            isInside = !isInside;
+        }
+    }
+
+    return isInside;
+}
+
 
 function findBiSector(edge)
 {
@@ -41,61 +69,10 @@ function getIntersectionPoint(edge)
     }
 }
 
-function getIntersectionPointForSquare(edge, boxPoints)
-{
-    let bisector = findBiSector(edge);
-    
-    lines = [];
-    let line1 = lineFromPoints(boxPoints[0], boxPoints[1]);
-    let line2 = lineFromPoints(boxPoints[1], boxPoints[2]);
-    let line3 = lineFromPoints(boxPoints[2], boxPoints[3]);
-    let line4 = lineFromPoints(boxPoints[3], boxPoints[0]);
-    lines.push(line1);
-    lines.push(line2);
-    lines.push(line3);
-    lines.push(line4);
-
-    let determinantVals = [];
-    determinantVals.push(bisector[0]*line1[1] - line1[0]*bisector[1]);
-    determinantVals.push(bisector[0]*line2[1] - line2[0]*bisector[1]);
-    determinantVals.push(bisector[0]*line3[1] - line3[0]*bisector[1]);
-    determinantVals.push(bisector[0]*line4[1] - line4[0]*bisector[1]);
-    let MINVAL = Number.MAX_SAFE_INTEGER;
-    let minLine;
-    let minDet;
 
 
-    let mid = new THREE.Vector3( (edge.vertex.point.x + edge.next.vertex.point.x)/2.0, (edge.vertex.point.y + edge.next.vertex.point.y)/2.0, 0);
-    //console.log("--");
-    //console.log([edge.vertex.point, edge.next.vertex.point, mid]);
-    //console.log("--");
 
-    for(let i = 0; i < determinantVals.length; ++i)
-    {
-        if(determinantVals[i] != 0)
-        {
-            let l = lines[i];
-            let x = (l[1]*bisector[2] - bisector[1]*l[2])/determinantVals[i]; 
-            let y = (bisector[0]*l[2] - l[0]*bisector[2])/determinantVals[i];
-
-            let d = mid.distanceTo(new THREE.Vector3(x,y,0));
-            if(d < MINVAL)
-            {
-                MINVAL = d;
-                minLine = lines[i];
-                minDet = determinantVals[i];
-            }
-        }
-    }
-
-    let x = (minLine[1]*bisector[2] - bisector[1]*minLine[2])/minDet; 
-    let y = (bisector[0]*minLine[2] - minLine[0]*bisector[2])/minDet;
-    return new THREE.Vector3(x,y,0);
-
-}
-
-// https://www.geeksforgeeks.org/program-for-point-of-intersection-of-two-lines/
-function cellLineIntersection(face, boxPoints)
+function createObject(face, boxPoints)
 {
     let boxLines = [];
     boxLines.push(lineFromPoints(boxPoints[0], boxPoints[1]));
@@ -107,74 +84,87 @@ function cellLineIntersection(face, boxPoints)
     for(let i = 0; i < face.length; ++i) {
         faceLines.push(lineFromPoints(face[i], face[(i+1)%face.length]));
     }
-    
-    let ids = pointsOutside(face,boxPoints);
-    //console.log(ids);
 
-    let intersections = [];
-    if(ids.length == face.length) {
-        return [];
+    //find first 
+    let startID = -1;
+    for(let i = 0; i < face.length; ++i)
+    {
+        if(isInside(face[i], boxPoints))
+        {
+            startID = i;
+            break;
+        }
     }
 
+    let intersections = [];
+    if(startID === -1) {
 
-    let xmin = Math.min(...(boxPoints.map( b => { return b.x })));
-    let ymin = Math.min(...(boxPoints.map( b => { return b.y })));
-    let xmax = Math.max(...(boxPoints.map( b => { return b.x })));
-    let ymax = Math.max(...(boxPoints.map( b => { return b.y })));
-    for(let i = 0; i < face.length; ++i) {
-        if(ids.includes(i)) {
-            
-            let minDist = Number.MAX_SAFE_INTEGER;
-            let id;
-            for(let q = 0; q < boxLines.length; ++q) {
-                let d = pointLineDistance(face[i], boxLines[q]);
-                if(d < minDist) {
-                    minDist = d;
-                    id = q;
+        return intersections;
+    }
+
+    //main loop
+    let id = startID;
+    intersections.push(face[id]);
+    do
+    {
+        //inside -> outside
+        let current = face[id];
+        let next = face[(id+1)%face.length];
+        if(isInside(current,boxPoints) && !isInside(next, boxPoints)) {
+
+            //find intersection point between inside -> outside
+            intersections.push(getIntersectionPointforBox(boxLines, boxPoints, faceLines, face, id)[0] ); 
+
+            //check if and add corner points
+            for(let i = 0; i < boxPoints.length; ++i) {
+                if(pointIsInPoly(boxPoints[i], face)) {
+                    intersections.push(boxPoints[i]);
+                    break;
                 }
             }
-            let xy = projectedPoint(face[i], boxLines[id]);
-            xy[0] = (xy[0] >= xmax) ? xmax: (xy[0] <= xmin ? xmin: xy[0]);
-            xy[1] = (xy[1] >= ymax) ? ymax: (xy[1] <= ymin ? ymin: xy[1]);
-            face[i] = new THREE.Vector3(xy[0], xy[1], 0);
+        }
+        //outside -> inside
+        else if(!isInside(current,boxPoints) && isInside(next, boxPoints)){
+            //find intersection point between inside -> outside
+            intersections.push(getIntersectionPointforBox(boxLines, boxPoints, faceLines, face, id)[0]);   
             
-            //If point is outisde, check if line  p->p+1 or p->p-1 intersects boxline
-                //loop all points push accordingly
+            
+        }
+        else if(isInside(current,boxPoints) && isInside(next, boxPoints)) {
+            intersections.push(current);            
+        }
+        else {
+           // let ips = getIntersectionPointforBox(boxLines, boxPoints, faceLines, face, id);
+            //for(let k = 0; k < ips.length; ++k) {
+            //    intersections.push(ips[k]);
+           // }
+        }
 
+        //advance pointers
+        id = (id+1)%face.length;        
 
-           //intersections.push(face[i]);
-       }
-        intersections.push(face[i]);
-            //else {
-                /*
-                intersections.push(face[i]);
-                for(let k = 0; k < boxLines.length; ++k) {
-                    if(segmentIntersection(face[i], face[(i+1)%face.length], boxPoints[k], boxPoints[(k+1)%boxPoints.length])) {
-                        let det = faceLines[i][0]*boxLines[k][1] - faceLines[i][1]*boxLines[k][0];
-                        if(Math.abs(det) > Number.EPSILON) {
-                            let x = (boxLines[k][1]*faceLines[i][2] - faceLines[i][1]*boxLines[k][2])/det; 
-                            let y = (faceLines[i][0]*boxLines[k][2] - boxLines[k][0]*faceLines[i][2])/det;
-                            intersections.push(new THREE.Vector3(x,y,0.0));
-                        }
-                    }
-                }
-                */
-            //}
-    }// https://stackoverflow.com/questions/21502011/finding-out-if-a-point-is-inside-a-voronoi-cell
-
-
+    } while(id != startID);
 
     return intersections;
+
 }
 
-function projectedPoint(point, line) {
-    let x = (line[1]*(line[1]*point.x - line[0]*point.y) - line[0]*line[2]) / (line[0]*line[0] + line[1]*line[1]);
-    let y = (line[0]*(line[0]*point.y - line[1]*point.x) - line[1]*line[2]) / (line[0]*line[0] + line[1]*line[1]);
-    return [x,y];
-}
-
-function pointLineDistance(point, line) {
-    return Math.abs(line[0]*point.x + line[1]*point.y + line[2]) / Math.sqrt(line[0]*line[0] + line[1]*line[1]);
+function getIntersectionPointforBox(boxLines, boxPoints, faceLines, face, id)
+{
+    let ints = [];
+    let current = face[id];
+    let next = face[(id+1)%face.length];
+    for(let k = 0; k < boxLines.length; ++k) {
+        if(segmentIntersection(current, next, boxPoints[k], boxPoints[(k+1)%boxPoints.length])) {
+            let det = faceLines[id][0]*boxLines[k][1] - faceLines[id][1]*boxLines[k][0];
+            if(Math.abs(det) > Number.EPSILON) {
+                let x = (boxLines[k][1]*faceLines[id][2] - faceLines[id][1]*boxLines[k][2])/det; 
+                let y = (faceLines[id][0]*boxLines[k][2] - boxLines[k][0]*faceLines[id][2])/det;
+                ints.push(new THREE.Vector3(x,y,0.0));
+            }
+        }
+    }
+    return ints;   
 }
 
 function isInside(p, boxPoints) {
@@ -189,14 +179,6 @@ function isInside(p, boxPoints) {
     return false;
 }
 
-function pointsOutside(face, boxPoints) {
-    let ids = [];
-    for(let i = 0; i < face.length; ++i) {
-        if(!isInside(face[i], boxPoints))
-            ids.push(i);
-    }
-    return ids;
-}
 
 function direction(Pi, Pj, Pk)
 {
@@ -217,9 +199,7 @@ function onSegment(Pi, Pj, Pk)
     }
     else return false;
 }
-
-//p1,p2 - voronoi
-//p3,p4 - box
+//this segment intersection algorithm comes from introduction to algorithms, 3rd edition by Cormen
 function segmentIntersection(p1,p2,p3,p4)
 {
     let d1 = direction(p3,p4,p1);
@@ -238,7 +218,6 @@ function segmentIntersection(p1,p2,p3,p4)
 
 function generateVoronoiDiagram(HEface, HEedge, HEvertex, outerSquare)
 {
-    let a,b,c,d,e,f;
     let pts = {};
     let faces = {};
     let visited = {};
@@ -270,17 +249,9 @@ function generateVoronoiDiagram(HEface, HEedge, HEvertex, outerSquare)
                 else
                 {
                     //special case
-                    console.log("SPECIAL CASE BUG");
                     let dummyVertex = new VertexNode(HEedge[key].next.vertex.point);
                     let dummyEdge = new HalfEdge(dummyVertex,null);
                     dummyEdge.next = HEedge[key];
-                    //let point1 = getIntersectionPointForSquare(HEedge[pointer].prev, outerSquare);
-                    //let point2 = getIntersectionPointForSquare(dummyEdge, outerSquare);
-                    //voroPts.push(point1);
-                    //voroPts.push(point2);
-                    //pts[new Face().id] = point1;
-                    //pts[new Face().id] = point2;
-
                     delete dummyEdge;
                     delete dummyVertex;
                     break;
@@ -289,7 +260,6 @@ function generateVoronoiDiagram(HEface, HEedge, HEvertex, outerSquare)
             } while(key != pointer);
             if(voroPts.length > 2)
                 faces[curEdgeVert.id] = voroPts;
-            //console.log(faces[curEdgeVert.id]);
         }
     }
     
@@ -297,20 +267,20 @@ function generateVoronoiDiagram(HEface, HEedge, HEvertex, outerSquare)
 }
 
 function meshify(square, voronoiFaces) {
-    
+    let wtf = [];
     for(let key in voronoiFaces) {
         //console.log(JSON.parse(JSON.stringify(voronoiFaces[key])));
         let newVoronoiCells = [];
-        //console.log(voronoiFaces[key].length);
-        newVoronoiCells = cellLineIntersection(voronoiFaces[key], square);
+       
+        newVoronoiCells = createObject(voronoiFaces[key], square);
         if(newVoronoiCells.length == 0) {
             delete voronoiFaces[key];
         }
         else {
-            voronoiFaces[key] = newVoronoiCells;
+            wtf[key] = newVoronoiCells;
+            //voronoiFaces[key] = newVoronoiCells;
         }
-        
-        //console.log(voronoiFaces[key].length);
-        //console.log("-----------------");
+
     }
+    return wtf;
 }
