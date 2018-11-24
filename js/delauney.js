@@ -62,7 +62,7 @@ function initDelaunay(dx2, dy2, dz2, he, vl, fl, bl) {
     he[e4.id] = e4;
     he[e5.id] = e5;
 
-    let multi = 3.0;
+    let multi = 0.75;
     bl[0] = new THREE.Vector3(-dx2*multi, dy2*multi,0);
     bl[1] = new THREE.Vector3(-dx2*multi, -dy2*multi,0);
     bl[2] = new THREE.Vector3(dx2*multi, -dy2*multi, 0);
@@ -462,9 +462,10 @@ function visualizeVoronoi(voroFaces, scene)
     }
 }
 
-function viz(faces, scene)
+function viz(faces, scene, square)
 {
     let lineMaterial = new THREE.LineBasicMaterial({color:0xcccccc});
+    /*
     for(let key in faces)
     {
         let g = new THREE.Geometry();
@@ -476,6 +477,15 @@ function viz(faces, scene)
         let line = new THREE.Line(g, lineMaterial);
         scene.add(line);
     }
+    */
+   let g = new THREE.Geometry();
+   g.vertices.push(square[0]);
+   g.vertices.push(square[1]);
+   g.vertices.push(square[2]);
+   g.vertices.push(square[3]);
+   g.vertices.push(square[0]);
+   let line = new THREE.Line(g, lineMaterial);
+   scene.add(line);
 }
 
 

@@ -34,13 +34,15 @@ function init() {
 	wireframeMaterial.wireframe = true;
 	
 	//generate new point
-	for(let i = 0; i < 500; ++i) {
+	for(let i = 0; i < 50; ++i) {
 		let point = samplePosition();
 		insertPoint(point,FL, HE, VL);
 	}
 	voronoiDiag = generateVoronoiDiagram(FL, HE, VL, outerSquare);
 	let geo = generateMesh(FL);
 	mesh = new THREE.Mesh(geo, wireframeMaterial);
+
+	meshify(outerSquare, voronoiDiag[1]);
 	visualizeVoronoi(voronoiDiag[1], scene);
 
 
@@ -83,19 +85,22 @@ function init() {
 	for(let key in VL) {
 		pointGeometry.vertices.push(VL[key].point);
 	}
-	for(let key in voronoiDiag[0]) {
-		voroPointGeometry.vertices.push(voronoiDiag[0][key]);
+	for(let key in voronoiDiag[1]) {
+		for(let i = 0; i < voronoiDiag[1][key].length; ++i) {
+			voroPointGeometry.vertices.push(voronoiDiag[1][key][i]);
+		}
 	}
 	
 
 	pointMaterial = new THREE.PointsMaterial( {color: 0x000000, size: 0.01} );
 	points = new THREE.Points(pointGeometry, pointMaterial);
-	voroPointMaterial = new THREE.PointsMaterial( {color: 0xff0000, size: 0.01} );
+	voroPointMaterial = new THREE.PointsMaterial( {color: 0x0000ff, size: 0.01} );
 	voroPoints = new THREE.Points(voroPointGeometry, voroPointMaterial);
 	//scene.add(points);
-	//scene.add(voroPoints);
+	scene.add(voroPoints);
 
-	//viz(FL,scene);
+
+	//viz(FL,scene, outerSquare);
 	
 
 	controls.update();

@@ -94,6 +94,148 @@ function getIntersectionPointForSquare(edge, boxPoints)
 
 }
 
+// https://www.geeksforgeeks.org/program-for-point-of-intersection-of-two-lines/
+function cellLineIntersection(face, boxPoints)
+{
+    let boxLines = [];
+    boxLines.push(lineFromPoints(boxPoints[0], boxPoints[1]));
+    boxLines.push(lineFromPoints(boxPoints[1], boxPoints[2]));
+    boxLines.push(lineFromPoints(boxPoints[2], boxPoints[3]));
+    boxLines.push(lineFromPoints(boxPoints[3], boxPoints[0]));
+
+    let faceLines = [];
+    for(let i = 0; i < face.length; ++i) {
+        faceLines.push(lineFromPoints(face[i], face[(i+1)%face.length]));
+    }
+    
+    let ids = pointsOutside(face,boxPoints);
+    //console.log(ids);
+
+    let intersections = [];
+    if(ids.length == face.length) {
+        return [];
+    }
+
+
+    let xmin = Math.min(...(boxPoints.map( b => { return b.x })));
+    let ymin = Math.min(...(boxPoints.map( b => { return b.y })));
+    let xmax = Math.max(...(boxPoints.map( b => { return b.x })));
+    let ymax = Math.max(...(boxPoints.map( b => { return b.y })));
+    for(let i = 0; i < face.length; ++i) {
+        if(ids.includes(i)) {
+            
+            let minDist = Number.MAX_SAFE_INTEGER;
+            let id;
+            for(let q = 0; q < boxLines.length; ++q) {
+                let d = pointLineDistance(face[i], boxLines[q]);
+                if(d < minDist) {
+                    minDist = d;
+                    id = q;
+                }
+            }
+            let xy = projectedPoint(face[i], boxLines[id]);
+            xy[0] = (xy[0] >= xmax) ? xmax: (xy[0] <= xmin ? xmin: xy[0]);
+            xy[1] = (xy[1] >= ymax) ? ymax: (xy[1] <= ymin ? ymin: xy[1]);
+            face[i] = new THREE.Vector3(xy[0], xy[1], 0);
+            
+            //If point is outisde, check if line  p->p+1 or p->p-1 intersects boxline
+                //loop all points push accordingly
+
+
+           //intersections.push(face[i]);
+       }
+        intersections.push(face[i]);
+            //else {
+                /*
+                intersections.push(face[i]);
+                for(let k = 0; k < boxLines.length; ++k) {
+                    if(segmentIntersection(face[i], face[(i+1)%face.length], boxPoints[k], boxPoints[(k+1)%boxPoints.length])) {
+                        let det = faceLines[i][0]*boxLines[k][1] - faceLines[i][1]*boxLines[k][0];
+                        if(Math.abs(det) > Number.EPSILON) {
+                            let x = (boxLines[k][1]*faceLines[i][2] - faceLines[i][1]*boxLines[k][2])/det; 
+                            let y = (faceLines[i][0]*boxLines[k][2] - boxLines[k][0]*faceLines[i][2])/det;
+                            intersections.push(new THREE.Vector3(x,y,0.0));
+                        }
+                    }
+                }
+                */
+            //}
+    }// https://stackoverflow.com/questions/21502011/finding-out-if-a-point-is-inside-a-voronoi-cell
+
+
+
+    return intersections;
+}
+
+function projectedPoint(point, line) {
+    let x = (line[1]*(line[1]*point.x - line[0]*point.y) - line[0]*line[2]) / (line[0]*line[0] + line[1]*line[1]);
+    let y = (line[0]*(line[0]*point.y - line[1]*point.x) - line[1]*line[2]) / (line[0]*line[0] + line[1]*line[1]);
+    return [x,y];
+}
+
+function pointLineDistance(point, line) {
+    return Math.abs(line[0]*point.x + line[1]*point.y + line[2]) / Math.sqrt(line[0]*line[0] + line[1]*line[1]);
+}
+
+function isInside(p, boxPoints) {
+    let xmin = Math.min(...(boxPoints.map( b => { return b.x })));
+    let ymin = Math.min(...(boxPoints.map( b => { return b.y })));
+    let xmax = Math.max(...(boxPoints.map( b => { return b.x })));
+    let ymax = Math.max(...(boxPoints.map( b => { return b.y })));
+
+    if((p.x >= xmin && p.x <= xmax) && (p.y >= ymin && p.y <= ymax)) {
+        return true;
+    }
+    return false;
+}
+
+function pointsOutside(face, boxPoints) {
+    let ids = [];
+    for(let i = 0; i < face.length; ++i) {
+        if(!isInside(face[i], boxPoints))
+            ids.push(i);
+    }
+    return ids;
+}
+
+function direction(Pi, Pj, Pk)
+{
+    let PkPi = new THREE.Vector3( 0, 0, 0 );
+    var PjPi = new THREE.Vector3( 0, 0, 0 );
+    let crossVec = new THREE.Vector3(0,0,0);
+    PkPi.subVectors(Pk, Pi);
+    PjPi.subVectors(Pj, Pi);
+    crossVec.crossVectors(PkPi,PjPi);
+    return crossVec.z;
+}
+function onSegment(Pi, Pj, Pk)
+{
+    if ( (Math.min(Pi.x, Pj.x) <= Pk.x && Pk.x <= Math.max(Pi.x, Pj.x)) && 
+    (   Math.min(Pi.y, Pj.y) <= Pk.y && Pk.y <= Math.max(Pi.y, Pj.y)))
+    {
+        return true;
+    }
+    else return false;
+}
+
+//p1,p2 - voronoi
+//p3,p4 - box
+function segmentIntersection(p1,p2,p3,p4)
+{
+    let d1 = direction(p3,p4,p1);
+    let d2 = direction(p3,p4,p2);
+    let d3 = direction(p1,p2,p3);
+    let d4 = direction(p1,p2,p4);
+    if( ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+        ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0 ))) return true;
+    else if(d1 == 0 && onSegment(p3,p4,p1)) return true;    
+    else if(d2 == 0 && onSegment(p3,p4,p2)) return true;
+    else if(d3 == 0 && onSegment(p1,p2,p3)) return true;
+    else if(d4 == 0 && onSegment(p1,p2,p4)) return true;
+    else return false;
+}
+
+
 function generateVoronoiDiagram(HEface, HEedge, HEvertex, outerSquare)
 {
     let a,b,c,d,e,f;
@@ -145,10 +287,30 @@ function generateVoronoiDiagram(HEface, HEedge, HEvertex, outerSquare)
                 }
 
             } while(key != pointer);
-            faces[curEdgeVert.id] = voroPts;
+            if(voroPts.length > 2)
+                faces[curEdgeVert.id] = voroPts;
             //console.log(faces[curEdgeVert.id]);
         }
     }
-
+    
     return [pts, faces];
+}
+
+function meshify(square, voronoiFaces) {
+    
+    for(let key in voronoiFaces) {
+        //console.log(JSON.parse(JSON.stringify(voronoiFaces[key])));
+        let newVoronoiCells = [];
+        //console.log(voronoiFaces[key].length);
+        newVoronoiCells = cellLineIntersection(voronoiFaces[key], square);
+        if(newVoronoiCells.length == 0) {
+            delete voronoiFaces[key];
+        }
+        else {
+            voronoiFaces[key] = newVoronoiCells;
+        }
+        
+        //console.log(voronoiFaces[key].length);
+        //console.log("-----------------");
+    }
 }
