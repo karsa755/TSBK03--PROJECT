@@ -447,8 +447,8 @@ function generateMesh(faceList) {
 
 function visualizeVoronoi(voroFaces, scene, b)
 {
-    let c = (b) ? {color:0xff0000}: {color:0x00ff00};
-    let lineMaterial = new THREE.LineBasicMaterial({color:0xff0000});
+    let c = (b == true) ? {color:0xff0000}: {color:0x00ff00};
+    let lineMaterial = new THREE.LineBasicMaterial(c);
     for(let key in voroFaces)
     {
         let cell = new THREE.Geometry();

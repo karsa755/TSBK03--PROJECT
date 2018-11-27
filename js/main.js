@@ -35,7 +35,7 @@ function init() {
 	wireframeMaterial.wireframe = true;
 	
 	//generate new point
-	for(let i = 0; i < 50; ++i) {
+	for(let i = 0; i < 200; ++i) {
 		let point = samplePosition();
 		insertPoint(point,FL, HE, VL);
 	}
@@ -44,7 +44,7 @@ function init() {
 	mesh = new THREE.Mesh(geo, wireframeMaterial);
 
 	let newVoroDEBUG = meshify(outerSquare, voronoiDiag[1]);
-	//visualizeVoronoi(voronoiDiag[1], scene,false);
+	visualizeVoronoi(voronoiDiag[1], scene, false);
 	visualizeVoronoi(newVoroDEBUG, scene, true);
 
 
