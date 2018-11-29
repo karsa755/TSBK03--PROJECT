@@ -74,6 +74,7 @@ function getIntersectionPoint(edge)
 
 function createObject(face, boxPoints)
 {
+    
     let boxLines = [];
     boxLines.push(lineFromPoints(boxPoints[0], boxPoints[1]));
     boxLines.push(lineFromPoints(boxPoints[1], boxPoints[2]));
@@ -86,7 +87,7 @@ function createObject(face, boxPoints)
     }
 
 
-    
+    /*
     let id = 0;
     let IN = 1;
     let OUT = -1;
@@ -179,8 +180,8 @@ function createObject(face, boxPoints)
         
     }while(startID != id);
     
-
-    /*
+*/
+    
     //find first 
     let startID = -1;
     for(let i = 0; i < face.length; ++i)
@@ -240,7 +241,7 @@ function createObject(face, boxPoints)
         id = (id+1)%face.length;        
 
     } while(id != startID);
-    */
+    
 
     return intersections;
 

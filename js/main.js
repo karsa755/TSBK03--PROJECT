@@ -1,5 +1,5 @@
 var camera, scene, renderer, controls;
-var geometry, material, mesh;
+var geometry, material, mesh, floor;
 var pointGeometry, pointMaterial, wireframeMaterial, colorMaterial, voroPointGeometry, voroPointMaterial
 var points, voroPoints;
 var clock;
@@ -9,6 +9,7 @@ var FL = {};
 var VL = {};
 var voronoiDiag = [];
 var outerSquare = [];
+var GRAVITY = -9.82;
 initDelaunay(1, 1, 0.00, HE, VL, FL, outerSquare);
 init();
 animate();
@@ -35,7 +36,7 @@ function init() {
 	wireframeMaterial.wireframe = true;
 	
 	//generate new point
-	for(let i = 0; i < 200; ++i) {
+	for(let i = 0; i < 50; ++i) {
 		let point = samplePosition();
 		insertPoint(point,FL, HE, VL);
 	}
@@ -44,8 +45,8 @@ function init() {
 	mesh = new THREE.Mesh(geo, wireframeMaterial);
 
 	let newVoroDEBUG = meshify(outerSquare, voronoiDiag[1]);
-	visualizeVoronoi(voronoiDiag[1], scene, false);
-	visualizeVoronoi(newVoroDEBUG, scene, true);
+	//visualizeVoronoi(voronoiDiag[1], scene,false);
+	//visualizeVoronoi(newVoroDEBUG, scene, true);
 
 
 	//debug
@@ -71,7 +72,8 @@ function init() {
 
 
 	mesh.geometry.colorsNeedUpdate = true;
-	//scene.add(mesh);
+
+	scene.add(mesh);
 
 	//console.log(Object.keys(FL).length);
 	//console.log(Object.keys(voronoiDiag[0]).length);
@@ -99,7 +101,7 @@ function init() {
 	voroPointMaterial = new THREE.PointsMaterial( {color: 0x0000ff, size: 0.01} );
 	voroPoints = new THREE.Points(voroPointGeometry, voroPointMaterial);
 	//scene.add(points);
-	scene.add(voroPoints);
+	//scene.add(voroPoints);
 
 
 	//viz(FL,scene, outerSquare);
@@ -109,12 +111,9 @@ function init() {
 }
 
 function animate() {
+	
 	requestAnimationFrame( animate );
 	controls.update();
-	//stuff
-	let rotY = RPM * (Math.PI*2.0) * clock.getDelta();
-	//mesh.rotation.y += rotY;
-	//points.rotation.y  += rotY;
 
 	renderer.render( scene, camera );
 
