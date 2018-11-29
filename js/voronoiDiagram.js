@@ -85,6 +85,102 @@ function createObject(face, boxPoints)
         faceLines.push(lineFromPoints(face[i], face[(i+1)%face.length]));
     }
 
+
+    
+    let id = 0;
+    let IN = 1;
+    let OUT = -1;
+    let startID = 0;
+    intersections = [];
+
+    let startInOut = (isInside(face[startID], boxPoints)) ? IN: OUT;
+    do {
+        let current = id;
+        let next = (id+1)%face.length;
+
+        if(isInside(face[current],boxPoints))
+            intersections.push(face[id]);
+        
+        //in -> out
+        if(isInside(face[current],boxPoints) && !isInside(face[next],boxPoints)) {
+            let p = getIntersectionPointforBox(boxLines, boxPoints, faceLines, face, current)[0];
+            if(startInOut == OUT) {
+                intersections.push(p);
+                for(let k = 0; k < boxPoints.length; ++k) {
+                    if(pointIsInPoly(boxPoints[k],face)) {
+                        intersections.push(boxPoints[k]);
+                        break;
+                    }
+                }
+            } 
+            else {
+                for(let k = 0; k < boxPoints.length; ++k) {
+                    if(pointIsInPoly(boxPoints[k],face)) {
+                        intersections.push(boxPoints[k]);
+                        break;
+                    }
+                }
+                intersections.push(p);
+            }
+        }
+        //out -> in
+        else if(!isInside(face[current],boxPoints) && isInside(face[next],boxPoints)) {
+            let p = getIntersectionPointforBox(boxLines, boxPoints, faceLines, face, current)[0];
+            if(startInOut == IN) {
+                intersections.push(p);
+                for(let k = 0; k < boxPoints.length; ++k) {
+                    if(pointIsInPoly(boxPoints[k],face)) {
+                        intersections.push(boxPoints[k]);
+                        break;
+                    }
+                }
+            } 
+            else {
+                for(let k = 0; k < boxPoints.length; ++k) {
+                    if(pointIsInPoly(boxPoints[k],face)) {
+                        intersections.push(boxPoints[k]);
+                        break;
+                    }
+                }
+                intersections.push(p);
+            }
+        }
+
+        //both in
+
+        //both out
+        else{
+            let ip = getIntersectionPointforBox(boxLines, boxPoints, faceLines, face, current);
+            let ddd = -1;
+            for(let k = 0; k < boxPoints.length; ++k) {
+                if(pointIsInPoly(boxPoints[k],face)) {
+                    ddd = k;
+                    break;
+                }
+            }
+            if(ddd > -1) {
+                if(ip.length > 0) {
+                    intersections.push(ip[0]);
+                    intersections.push(boxPoints[ddd]);
+                    intersections.push(ip[1]);
+                }
+                else {
+                intersections.push(boxPoints[ddd]);
+                }
+                
+            }else {
+                for(let qqq = 0; qqq < ip.length; ++qqq) {
+                    intersections.push(ip[qqq]);
+                }
+            }
+        }
+
+        id = next;
+        
+    }while(startID != id);
+    
+
+    /*
     //find first 
     let startID = -1;
     for(let i = 0; i < face.length; ++i)
@@ -144,6 +240,7 @@ function createObject(face, boxPoints)
         id = (id+1)%face.length;        
 
     } while(id != startID);
+    */
 
     return intersections;
 
