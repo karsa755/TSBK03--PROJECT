@@ -435,7 +435,7 @@ function generateMesh(faceList) {
 
 
         geo.faces.push(newFace);
-        //geo.faces.push(newBackFace);
+        geo.faces.push(newBackFace);
 
         geo.computeFaceNormals();
         geo.computeVertexNormals();
