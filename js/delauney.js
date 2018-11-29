@@ -13,10 +13,10 @@ function initDelaunay(dx2, dy2, dz2, he, vl, fl, bl) {
     zmin = -dz2;
     zmax = dz2;
 
-    let v0 = new VertexNode(new THREE.Vector3(-dx2,dy2,0));
-    let v1 = new VertexNode(new THREE.Vector3(-dx2,-dy2,0));
-    let v2 = new VertexNode(new THREE.Vector3(dx2,dy2,0));
-    let v3 = new VertexNode(new THREE.Vector3(dx2,-dy2,0));
+    let v0 = new VertexNode(new THREE.Vector3(-dx2,10+dy2,0));
+    let v1 = new VertexNode(new THREE.Vector3(-dx2,10-dy2,0));
+    let v2 = new VertexNode(new THREE.Vector3(dx2,10+dy2,0));
+    let v3 = new VertexNode(new THREE.Vector3(dx2,10-dy2,0));
 
     vl[v0.id] = v0;
     vl[v1.id] = v1;
@@ -63,16 +63,16 @@ function initDelaunay(dx2, dy2, dz2, he, vl, fl, bl) {
     he[e5.id] = e5;
 
     let multi = 0.75;
-    bl[0] = new THREE.Vector3(-dx2*multi, dy2*multi,0);
-    bl[1] = new THREE.Vector3(-dx2*multi, -dy2*multi,0);
-    bl[2] = new THREE.Vector3(dx2*multi, -dy2*multi, 0);
-    bl[3] = new THREE.Vector3(dx2*multi, dy2*multi, 0); 
+    bl[0] = new THREE.Vector3(-dx2*multi, 10 + (dy2*multi),0);
+    bl[1] = new THREE.Vector3(-dx2*multi, 10+(-dy2*multi),0);
+    bl[2] = new THREE.Vector3(dx2*multi, 10+(-dy2*multi), 0);
+    bl[3] = new THREE.Vector3(dx2*multi, 10+(dy2*multi), 0); 
 }
 
 function samplePosition() {
 
     let x = (Math.random() * (xmax-xmin)) + xmin;
-    let y = (Math.random() * (ymax-ymin)) + ymin;
+    let y = (Math.random() * (ymax-ymin)) + ymin + 10;
     let z = (Math.random() * (zmax-zmin)) + zmin;
 
     return new THREE.Vector3(x,y,z);
