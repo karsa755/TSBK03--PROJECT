@@ -371,10 +371,11 @@ function meshify(square, voronoiFaces) {
         let newVoronoiCells = [];
        
         newVoronoiCells = createObject(voronoiFaces[key], square);
-        if(newVoronoiCells.length == 0) {
+        if(newVoronoiCells.length < 1 || newVoronoiCells === undefined) {
             delete voronoiFaces[key];
         }
-        else {
+        else 
+        {
             wtf[key] = newVoronoiCells;
             //voronoiFaces[key] = newVoronoiCells;
         }

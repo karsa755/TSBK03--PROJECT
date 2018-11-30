@@ -1,3 +1,5 @@
+//utility functions that comes from THREE.js documentation
+
 let EDGENUMBER = 0;
 let FACENUMBER = 0;
 let VERTEXNUMBER = 0;

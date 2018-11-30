@@ -1,0 +1,1 @@
+//http://www.gdmc.nl/publications/2007/Computing_3D_Voronoi_Diagram.pdf -- good source 
