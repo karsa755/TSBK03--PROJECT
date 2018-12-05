@@ -87,7 +87,7 @@ function createObject(face, boxPoints)
     }
 
 
-    /*
+    
     let id = 0;
     let IN = 1;
     let OUT = -1;
@@ -180,10 +180,10 @@ function createObject(face, boxPoints)
         
     }while(startID != id);
     
-*/
+
     
     //find first 
-    let startID = -1;
+  /*  let startID = -1;
     for(let i = 0; i < face.length; ++i)
     {
         if(isInside(face[i], boxPoints))
@@ -242,7 +242,7 @@ function createObject(face, boxPoints)
 
     } while(id != startID);
     
-
+    */
     return intersections;
 
 }

@@ -124,7 +124,7 @@ function animate() {
 
 	renderer.render( scene, camera );
 
-	goblinWorld.step(1/100);
+	goblinWorld.step(1/70);
 
 	for(let i = 0; i < scene.children.length; ++i) {
 		updateRepresentation(scene.children[i], goblinWorld.rigid_bodies[i]);
@@ -142,21 +142,25 @@ function toGoblinMesh(faceList, world) {
 	for(let key in faceList) {
 
 		let newVerts = [];
+		let someVerts = [];
 		let offset = 0.2;
 		for(let i = 0; i < faceList[key].length; ++i)
 		{
 			let v0 = toGoblinVector3(faceList[key][i]);
+			someVerts.push(v0);
 			newVerts.push(v0);
 			newVerts.push(new Goblin.Vector3(v0.x, v0.y, v0.z+offset));
 		}
-		let center = massCenterForPolygon(newVerts, offset);
-				
+		let center = massAvCenter(newVerts);
+		
 		for(let i = 0; i < newVerts.length; ++i)
 		{
 			newVerts[i].subtract(center);
 			
 		}
+
 		let shape = new Goblin.ConvexShape(newVerts);
+
 		shape.center_of_mass = center;
 		shape.id = key;
 		let rigidShape = new Goblin.RigidBody(shape,1.0);
@@ -167,14 +171,19 @@ function toGoblinMesh(faceList, world) {
 		world.addRigidBody(rigidShape);
 		shapes.push(shape);
 
-/* 		let v0 = toGoblinVector3(faceList[key].edge.vertex.point);
+
+	/*	let v0 = toGoblinVector3(faceList[key].edge.vertex.point);
 		let v1 = toGoblinVector3(faceList[key].edge.next.vertex.point);
 		let v2 = toGoblinVector3(faceList[key].edge.prev.vertex.point);
 		let v3 = new Goblin.Vector3(v0.x, v0.y, v0.z+0.2);
 		let v4 = new Goblin.Vector3(v1.x, v1.y, v1.z+0.2);
 		let v5 = new Goblin.Vector3(v2.x, v2.y, v2.z+0.2);
-
-		let center = massCenter(v0,v1,v2,v3,v4,v5);
+		
+		
+		//let center = massCenter(v0,v1,v2,v3,v4,v5);
+		//let center = massCenterForPolygon([v0,v1,v2]);
+		let center = massAvCenter([v0,v1,v2,v3,v4,v5]);
+		//center.z = 0.0;
 
 		v0.subtract(center);
 		v1.subtract(center);
@@ -183,8 +192,7 @@ function toGoblinMesh(faceList, world) {
 		v4.subtract(center);
 		v5.subtract(center);
 		
-		let shape = new Goblin.ConvexShape([v0,v1,v2,v3,v4,v5]);
-		
+		let shape = new Goblin.ConvexShape([v0,v1,v2,v3,v4,v5]);	
 		shape.id = key;
 		let rigidShape = new Goblin.RigidBody(shape,
 			1.0
@@ -193,12 +201,10 @@ function toGoblinMesh(faceList, world) {
 		rigidShape.restitution = 0;
 		rigidShape.friction = 0.5;
 		rigidShape.position = center;
-		rigidShape.applyImpulse( new Goblin.Vector3( 0, -0.1, 0 ) );
 
 		world.addRigidBody(rigidShape);
 		shapes.push(shape); */
 	}
-
 	return shapes;
 }
 
@@ -260,15 +266,29 @@ function massCenter(v1,v2,v3,v4,v5,v6) {
 	return new Goblin.Vector3(xmid,ymid,zmid);
 }
 
+function massAvCenter(verts)
+{
+	let center = new Goblin.Vector3(0.0, 0.0, 0.0);
+	for(let i = 0; i < verts.length; ++i)
+	{
+		center.x += verts[i].x;
+		center.y += verts[i].y;
+		center.z += verts[i].z;
+	}
+	center.x /= verts.length;
+	center.y /= verts.length;
+	center.z /= verts.length;
+	return center;
+}
 
-//based on https://en.wikipedia.org/wiki/Centroid , the polygon centroid part
+//based on https://en.wikipedia.org/wiki/Centroid , the polygon centroid part -- does not work for some reason??
 function massCenterForPolygon(newVerts, offset)
 {
 	let center = new Goblin.Vector3(0.0,0.0,offset / 2.0);
 	let area = 0.0;
 	for(let i = 0; i < newVerts.length; ++i)
 	{
-		center.z += newVerts[i].z;
+		
 		if(newVerts.length-1 == i )
 		{
 			let areaVal = (newVerts[i].x * newVerts[0].y) - (newVerts[0].x * newVerts[i].y);
@@ -290,6 +310,7 @@ function massCenterForPolygon(newVerts, offset)
 		center.x = -center.x;
 		center.y = -center.y;
 	}
+
 	center.x /=  area;
 	center.y /=  area;
 	return center;
