@@ -38,7 +38,7 @@ function samplePositionTetra(p0,p1,p2,p3) {
     s3.multiplyScalar(u);
 
     let v1 = new THREE.Vector3(0.0, 0.0, 0.0);
-    let v1 = new THREE.Vector3(0.0, 0.0, 0.0);
+    let v2 = new THREE.Vector3(0.0, 0.0, 0.0);
     let vRes = new THREE.Vector3(0.0, 0.0, 0.0);
     v1.addVectors(s0,s1);
     v2.addVectors(s2,s3);
@@ -47,11 +47,7 @@ function samplePositionTetra(p0,p1,p2,p3) {
 }
 
 
-function initTetra(vl,hl,fl, ol) {
-    let v0 = new VertexNode(new THREE.Vector3(-5,0,0));
-    let v1 = new VertexNode(new THREE.Vector3(5,0,0));
-    let v2 = new VertexNode(new THREE.Vector3(0,0,-10));
-    let v3 = new VertexNode(new THREE.Vector3(0,10,-5));
+function initTetra(vl,hl,fl, ol, v0, v1, v2, v3) {
 
     let f0 = new Face();
     let f1 = new Face();
@@ -143,7 +139,7 @@ function initTetra(vl,hl,fl, ol) {
     hl[v2v0.id] = v2v0;
     hl[v0v3.id] = v0v3;
 
-    ol[getCenter(v0.point,v1.point,v2.point,v3.point)] = [v0.point,v1.point,v2.point,v3.point];
+    ol[getCenter(v0.point,v1.point,v2.point,v3.point)] = {'vertices': [v0.point,v1.point,v2.point,v3.point], 'faces': [f0,f1,f2,f3]};
 }
 
 function getCenter(p0,p1,p2,p3) {
@@ -155,10 +151,43 @@ function generateGeometry(ol, scene) {
         let r = Math.random();
 		let g = Math.random();
         let b = Math.random();
-        let geo = new THREE.ConvexGeometry(ol[key]);
+        let geo = new THREE.ConvexGeometry(ol[key].vertices);
         let mat = new THREE.MeshBasicMaterial({color: new THREE.Color(r, g, b)});
         mat.wireframe = true;
         let mesh = new THREE.Mesh(geo,mat);
         scene.add(mesh);
     }
+}
+
+function split14(p, faces) {
+
+}
+
+//https://stackoverflow.com/questions/25179693/how-to-check-whether-the-point-is-in-the-tetrahedron-or-not -- source
+function SameSide(v1, v2, v3, v4, p)
+{
+    let v2v1 = new THREE.Vector3(0.0, 0.0, 0.0);
+    let v3v1 = new THREE.Vector3(0.0, 0.0, 0.0);
+    let v4v1 = new THREE.Vector3(0.0, 0.0, 0.0);
+    let pv1 = new THREE.Vector3(0.0, 0.0, 0.0);
+    let normal = new THREE.Vector3(0.0, 0.0, 0.0);                
+    v2v1.subVectors(v2,v1);
+    v3v1.subVectors(v3,v1);
+    v4v1.subVectors(v4,v1);
+    pv1.subVectors(p,v1);
+    normal.crossVectors(v2v1, v3v1);
+    let dotV4 = normal.dot(v4v1);
+    let dotP = normal.dot(pv1);
+    
+    //Added dotP == 0 such that point in plane counts as "in tetra"
+    return (Math.sign(dotV4) == Math.sign(dotP)) || dotP == 0;
+}
+
+https://stackoverflow.com/questions/25179693/how-to-check-whether-the-point-is-in-the-tetrahedron-or-not -- source
+function PointInTetrahedron(v1, v2, v3, v4, p)
+{
+    return SameSide(v1, v2, v3, v4, p) &&
+           SameSide(v2, v3, v4, v1, p) &&
+           SameSide(v3, v4, v1, v2, p) &&
+           SameSide(v4, v1, v2, v3, p);               
 }
