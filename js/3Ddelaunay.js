@@ -26,17 +26,22 @@ function samplePositionTetra(p0,p1,p2,p3) {
         s = 1 - t - tmp;
     }
     let a = 1.0-s-t-u;
-    
-    p0.multiplyScalar(a);
-    p1.multiplyScalar(s);
-    p2.multiplyScalar(t);
-    p3.multiplyScalar(u);
+
+    let s0 = p0.clone();
+    let s1 = p1.clone();
+    let s2 = p2.clone();
+    let s3 = p3.clone();
+
+    s0.multiplyScalar(a);
+    s1.multiplyScalar(s);
+    s2.multiplyScalar(t);
+    s3.multiplyScalar(u);
+
     let v1 = new THREE.Vector3(0.0, 0.0, 0.0);
     let v1 = new THREE.Vector3(0.0, 0.0, 0.0);
     let vRes = new THREE.Vector3(0.0, 0.0, 0.0);
-    v1.addVectors(p0,p1);
-    v2.addVectors(p2,p3);
+    v1.addVectors(s0,s1);
+    v2.addVectors(s2,s3);
     vRes.addVectors(v1,v2);
-
     return vRes;
 }
